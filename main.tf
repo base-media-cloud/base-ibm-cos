@@ -257,7 +257,6 @@ resource "ibm_cos_bucket_lifecycle_configuration" "cos_bucket_lifecycle" {
     content {
       expiration {
         days = var.expire_days
-        expired_object_delete_marker = true
       }
       filter {
         prefix = var.expire_filter_prefix != null ? var.expire_filter_prefix : ""
