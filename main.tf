@@ -271,6 +271,9 @@ resource "ibm_cos_bucket_lifecycle_configuration" "cos_bucket_lifecycle" {
     expiration {
       expired_object_delete_marker = true
     }
+    filter {
+      prefix = ""
+    }
   }
   dynamic "lifecycle_rule" {
     ## This for_each block is NOT a loop to attach to multiple transition blocks.
