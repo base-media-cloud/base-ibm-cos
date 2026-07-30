@@ -266,6 +266,13 @@ resource "ibm_cos_bucket_lifecycle_configuration" "cos_bucket_lifecycle" {
       status  = "enable"
     }
   }
+  lifecycle_rule {
+    rule_id = "expire-object-delete-marker"
+    status  = "enable"
+    expiration {
+      expired_object_delete_marker = true
+    }
+  }
   dynamic "lifecycle_rule" {
     ## This for_each block is NOT a loop to attach to multiple transition blocks.
     ## This block is only used to conditionally add retention block depending on archive rule is enabled.
