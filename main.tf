@@ -28,16 +28,41 @@ resource "ibm_resource_tag" "cos_access_tag" {
 }
 
 # Instance resource keys
+locals {
+  # Resource keys that do not supply their own service ID get a module-managed one
+  resource_keys_without_service_id = { for key in var.resource_keys : key.name => key if key.service_id_crn == null }
+}
+
+# Service IDs for resource keys that do not supply their own service_id_crn
+resource "ibm_iam_service_id" "service_ids" {
+  for_each    = local.resource_keys_without_service_id
+  name        = "${each.key}-service-id"
+  description = "Service ID for COS resource key ${each.key}"
+}
+
+# Limit each module-managed service ID to the COS bucket created by this module, with the role requested for its key
+resource "ibm_iam_service_policy" "resource_key" {
+  for_each       = local.resource_keys_without_service_id
+  iam_id = ibm_iam_service_id.service_ids[each.key].iam_id
+  roles          = [each.value.role]
+  resources {
+    service              = "cloud-object-storage"
+    resource_type        = "bucket"
+    resource             = local.bucket_name
+  }
+}
+
 resource "ibm_resource_key" "resource_keys" {
   for_each             = { for key in var.resource_keys : key.name => key }
   name                 = each.value.key_name == null ? each.key : each.value.key_name
   resource_instance_id = local.cos_instance_id
   role                 = each.value.role
   parameters = {
-    "serviceid_crn"     = each.value.service_id_crn
+    "serviceid_crn"     = each.value.service_id_crn == null ? ibm_iam_service_id.service_ids[each.key].crn : each.value.service_id_crn
     "HMAC"              = each.value.generate_hmac_credentials
     "service-endpoints" = each.value.endpoint
   }
+  depends_on = [ibm_iam_service_policy.resource_key]
 }
 
 # Lookup instance details
