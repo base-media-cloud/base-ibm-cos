@@ -47,7 +47,6 @@ resource "ibm_iam_service_policy" "resource_key" {
   roles          = [each.value.role]
   resources {
     service              = "cloud-object-storage"
-    resource_instance_id = local.cos_instance_guid
     resource_type        = "bucket"
     resource             = local.bucket_name
   }
